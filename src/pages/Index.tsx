@@ -1,25 +1,29 @@
 import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
 import AboutSection from "@/components/AboutSection";
-import AppointmentCalender from "medos-sdk-react";
+import { AppointmentCalender, MedosClient } from "medos-sdk-react";
 import { ComponentType } from "react";
 const AppointmentCalenderComponent =
   AppointmentCalender as unknown as ComponentType<{
-    apiKey: string;
     onError?: (err: Error) => void;
   }>;
+
+await MedosClient.init({
+  apiKey: "mk_c6c9b1eafab8b73f554f49931ed80e5ac6c9b1eafab8b73f554f49931ed80e5a",
+});
 const Index = () => {
   return (
     <div className="min-h-screen">
       <HeroSection />
       <ServicesSection />
       <AboutSection />
-      <AppointmentCalenderComponent
-        apiKey="HIII"
-        onError={(err) => {
-          console.log(err);
-        }}
-      />
+      <div className="px-72">
+        <AppointmentCalenderComponent
+          onError={(err) => {
+            console.log(err);
+          }}
+        />
+      </div>
       <footer className="bg-primary text-primary-foreground py-8">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm">
