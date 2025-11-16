@@ -1,14 +1,14 @@
 import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
 import AboutSection from "@/components/AboutSection";
-import { AppointmentCalender, MedosClient } from "medos-sdk-react";
+import { AppointmentCalender, MedosClient } from "medos-sdk";
 import { ComponentType } from "react";
 const AppointmentCalenderComponent =
   AppointmentCalender as unknown as ComponentType<{
     onError?: (err: Error) => void;
   }>;
 
-await MedosClient.init({
+MedosClient.init({
   apiKey: "mk_c6c9b1eafab8b73f554f49931ed80e5ac6c9b1eafab8b73f554f49931ed80e5a",
 });
 const Index = () => {
@@ -17,7 +17,7 @@ const Index = () => {
       <HeroSection />
       <ServicesSection />
       <AboutSection />
-      <div className="px-72">
+      <div className="xl:px-72 px-10 ">
         <AppointmentCalenderComponent
           onError={(err) => {
             console.log(err);
