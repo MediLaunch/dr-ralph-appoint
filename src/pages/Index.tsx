@@ -1,7 +1,7 @@
 import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
 import AboutSection from "@/components/AboutSection";
-import { AppointmentCalender, MedosClient } from "medos-sdk";
+import { AppointmentCalender, EnquiryForm, MedosClient } from "medos-sdk";
 import { ComponentType } from "react";
 const AppointmentCalenderComponent =
   AppointmentCalender as unknown as ComponentType<{
@@ -9,7 +9,7 @@ const AppointmentCalenderComponent =
   }>;
 
 MedosClient.init({
-  apiKey: "mk_c6c9b1eafab8b73f554f49931ed80e5ac6c9b1eafab8b73f554f49931ed80e5a",
+  apiKey: "mk_8c95a5579c64c00958c269bb3d25d3e18c95a5579c64c00958c269bb3d25d3e1",
 });
 const Index = () => {
   return (
@@ -23,6 +23,9 @@ const Index = () => {
             console.log(err);
           }}
         />
+      </div>
+      <div className="xl:px-72 px-10 ">
+        <EnquiryForm />
       </div>
       <footer className="bg-primary text-primary-foreground py-8">
         <div className="container mx-auto px-4 text-center">
