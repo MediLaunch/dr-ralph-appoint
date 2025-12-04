@@ -1,0 +1,320 @@
+name: Deploy Dr Ralph Appointment App to S3
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual triggering
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+  VITE_APP_BASE_URL: ${{ secrets.VITE_APP_BASE_URL }}
+  VITE_APP_API_URL: ${{ secrets.VITE_APP_API_URL }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  deploy:
+    name: Deploy to S3
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Display deployment environment
+      run: |
+        echo "=================================="
+        echo "🚀 Deployment Configuration"
+        echo "=================================="
+        echo "Branch: ${{ github.ref_name }}"
+        echo ""
+        echo "Checking if secrets are loaded correctly:"
+        echo ""
+
+        # Check S3 Bucket
+        if [ -n "${{ env.S3_BUCKET_NAME }}" ]; then
+          echo "✅ S3_BUCKET_NAME: ${{ env.S3_BUCKET_NAME }}"
+        else
+          echo "❌ S3_BUCKET_NAME: NOT SET"
+          echo "   Expected secret: S3_BUCKET_NAME"
+        fi
+
+        # Check CloudFront Distribution ID
+        if [ -n "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+          echo "✅ CLOUDFRONT_DISTRIBUTION_ID: ${{ env.CLOUDFRONT_DISTRIBUTION_ID }}"
+        else
+          echo "⚠️  CLOUDFRONT_DISTRIBUTION_ID: NOT SET (Optional)"
+          echo "   Expected secret: CLOUDFRONT_DISTRIBUTION_ID"
+        fi
+
+        # Check Base URL
+        if [ -n "${{ env.VITE_APP_BASE_URL }}" ]; then
+          echo "✅ VITE_APP_BASE_URL: ${{ env.VITE_APP_BASE_URL }}"
+        else
+          echo "⚠️  VITE_APP_BASE_URL: NOT SET (Optional)"
+          echo "   Expected secret: VITE_APP_BASE_URL"
+        fi
+
+        # Check API URL
+        if [ -n "${{ env.VITE_APP_API_URL }}" ]; then
+          echo "✅ VITE_APP_API_URL: ${{ env.VITE_APP_API_URL }}"
+        else
+          echo "⚠️  VITE_APP_API_URL: NOT SET (Optional)"
+        fi
+
+        # Check AWS Credentials (don't show values)
+        if [ -n "${{ env.AWS_ACCESS_KEY_ID }}" ]; then
+          echo "✅ AWS_ACCESS_KEY_ID: [SET]"
+        else
+          echo "❌ AWS_ACCESS_KEY_ID: NOT SET"
+        fi
+
+        if [ -n "${{ env.AWS_SECRET_ACCESS_KEY }}" ]; then
+          echo "✅ AWS_SECRET_ACCESS_KEY: [SET]"
+        else
+          echo "❌ AWS_SECRET_ACCESS_KEY: NOT SET"
+        fi
+
+        echo ""
+        echo "=================================="
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+      timeout-minutes: 10
+
+    - name: Build Vite application
+      run: |
+        echo "🔧 Build Configuration:"
+        echo "  - VITE_APP_BASE_URL: ${{ env.VITE_APP_BASE_URL }}"
+        echo "  - VITE_APP_API_URL: ${{ env.VITE_APP_API_URL }}"
+        echo ""
+        echo "🏗️  Starting Vite build..."
+        npm run build
+      timeout-minutes: 15
+      env:
+        VITE_APP_BASE_URL: ${{ env.VITE_APP_BASE_URL }}
+        VITE_APP_API_URL: ${{ env.VITE_APP_API_URL }}
+
+    - name: Verify build output
+      run: |
+        echo "Verifying build output..."
+
+        if [ -d "dist" ]; then
+          echo "✅ Found 'dist' directory (Vite default output)"
+          BUILD_DIR="dist"
+        else
+          echo "❌ No build directory found. Available directories:"
+          ls -la
+          exit 1
+        fi
+
+        echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_ENV
+        echo ""
+        echo "📁 Files in $BUILD_DIR directory:"
+        ls -la $BUILD_DIR/
+
+        # Show directory structure
+        echo ""
+        echo "📂 Build directory structure:"
+        find $BUILD_DIR -type f | head -20
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Create S3 bucket and configure for website hosting
+      run: |
+        # Create bucket if it doesn't exist
+        if ! aws s3api head-bucket --bucket $S3_BUCKET_NAME 2>/dev/null; then
+          # For us-east-1, don't specify LocationConstraint
+          if [ "$AWS_REGION" == "us-east-1" ]; then
+            aws s3api create-bucket --bucket $S3_BUCKET_NAME --region $AWS_REGION
+          else
+            aws s3api create-bucket --bucket $S3_BUCKET_NAME --region $AWS_REGION --create-bucket-configuration LocationConstraint=$AWS_REGION
+          fi
+          echo "Created S3 bucket: $S3_BUCKET_NAME"
+        else
+          echo "S3 bucket already exists: $S3_BUCKET_NAME"
+        fi
+
+        # Configure CORS for the bucket
+        aws s3api put-bucket-cors --bucket $S3_BUCKET_NAME --cors-configuration '{
+          "CORSRules": [
+            {
+              "AllowedOrigins": ["*"],
+              "AllowedMethods": ["GET", "HEAD"],
+              "AllowedHeaders": ["*"],
+              "ExposeHeaders": ["ETag"],
+              "MaxAgeSeconds": 3000
+            }
+          ]
+        }'
+        echo "Configured CORS for S3 bucket"
+
+        # Configure bucket for static website hosting
+        aws s3api put-bucket-website --bucket $S3_BUCKET_NAME --website-configuration '{
+          "IndexDocument": {"Suffix": "index.html"},
+          "ErrorDocument": {"Key": "index.html"}
+        }'
+
+        # Set bucket policy for public read access
+        aws s3api put-bucket-policy --bucket $S3_BUCKET_NAME --policy '{
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "PublicReadGetObject",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "s3:GetObject",
+              "Resource": "arn:aws:s3:::'$S3_BUCKET_NAME'/*"
+            }
+          ]
+        }'
+
+        # Disable block public access
+        aws s3api put-public-access-block --bucket $S3_BUCKET_NAME --public-access-block-configuration '{
+          "BlockPublicAcls": false,
+          "IgnorePublicAcls": false,
+          "BlockPublicPolicy": false,
+          "RestrictPublicBuckets": false
+        }'
+
+        echo "✅ S3 bucket configured for static website hosting"
+
+    - name: Deploy to S3
+      run: |
+        cd ${{ env.BUILD_DIR }}
+
+        echo "Deploying from ${{ env.BUILD_DIR }} directory"
+
+        # Clear the S3 bucket completely to remove old files
+        echo "🧹 Clearing S3 bucket to remove old files..."
+        aws s3 rm s3://$S3_BUCKET_NAME/ --recursive
+
+        # Sync files to S3 with proper cache headers
+        echo "📁 Uploading new files to S3..."
+
+        # Upload HTML files with no-cache
+        aws s3 sync . s3://$S3_BUCKET_NAME/ \
+          --exclude "*" \
+          --include "*.html" \
+          --content-type "text/html" \
+          --cache-control "public, max-age=0, must-revalidate"
+
+        # Upload CSS files with long cache
+        aws s3 sync . s3://$S3_BUCKET_NAME/ \
+          --exclude "*" \
+          --include "*.css" \
+          --content-type "text/css" \
+          --cache-control "public, max-age=31536000, immutable"
+
+        # Upload JavaScript files with long cache
+        aws s3 sync . s3://$S3_BUCKET_NAME/ \
+          --exclude "*" \
+          --include "*.js" \
+          --content-type "application/javascript" \
+          --cache-control "public, max-age=31536000, immutable"
+
+        # Upload JSON files
+        aws s3 sync . s3://$S3_BUCKET_NAME/ \
+          --exclude "*" \
+          --include "*.json" \
+          --content-type "application/json" \
+          --cache-control "public, max-age=31536000, immutable"
+
+        # Upload images
+        aws s3 sync . s3://$S3_BUCKET_NAME/ \
+          --exclude "*" \
+          --include "*.png" \
+          --include "*.jpg" \
+          --include "*.jpeg" \
+          --include "*.gif" \
+          --include "*.svg" \
+          --include "*.webp" \
+          --include "*.ico" \
+          --cache-control "public, max-age=31536000, immutable"
+
+        # Upload font files
+        aws s3 sync . s3://$S3_BUCKET_NAME/ \
+          --exclude "*" \
+          --include "*.woff" \
+          --include "*.woff2" \
+          --include "*.ttf" \
+          --include "*.eot" \
+          --cache-control "public, max-age=31536000, immutable"
+
+        # Upload everything else
+        aws s3 sync . s3://$S3_BUCKET_NAME/ \
+          --exclude "*.html" \
+          --exclude "*.css" \
+          --exclude "*.js" \
+          --exclude "*.json" \
+          --exclude "*.png" \
+          --exclude "*.jpg" \
+          --exclude "*.jpeg" \
+          --exclude "*.gif" \
+          --exclude "*.svg" \
+          --exclude "*.webp" \
+          --exclude "*.ico" \
+          --exclude "*.woff" \
+          --exclude "*.woff2" \
+          --exclude "*.ttf" \
+          --exclude "*.eot"
+
+        echo "✅ S3 deployment completed successfully!"
+
+    - name: Invalidate CloudFront Cache
+      run: |
+        if [ -n "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+          echo "🌐 Invalidating CloudFront cache..."
+
+          # Create invalidation for all files
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "📝 Invalidation created with ID: $INVALIDATION_ID"
+
+          # Wait for invalidation to complete
+          echo "⏳ Waiting for invalidation to complete..."
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --id $INVALIDATION_ID
+
+          echo "✅ CloudFront cache invalidation completed!"
+        else
+          echo "⚠️  CloudFront Distribution ID not found. Skipping cache invalidation."
+          echo "   Add CLOUDFRONT_DISTRIBUTION_ID to your repository secrets to enable cache invalidation."
+        fi
+
+    - name: Output URLs
+      run: |
+        S3_WEBSITE_URL="http://${{ env.S3_BUCKET_NAME }}.s3-website-${{ env.AWS_REGION }}.amazonaws.com"
+
+        echo "🚀 Deployment completed successfully!"
+        echo "📍 S3 Website URL: $S3_WEBSITE_URL"
+
+        if [ -n "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+          echo "🌐 CloudFront URL: ${{ env.VITE_APP_BASE_URL }}"
+          echo "✨ CloudFront cache has been invalidated - new content should be available shortly"
+        fi
+
+        echo ""
+        echo "Deployment Summary:"
+        echo "- Branch: ${{ github.ref_name }}"
+        echo "- S3 Bucket: ${{ env.S3_BUCKET_NAME }}"
+        echo "- CloudFront Distribution: ${{ env.CLOUDFRONT_DISTRIBUTION_ID }}"
