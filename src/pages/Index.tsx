@@ -11,7 +11,7 @@ import {
 } from "medos-sdk";
 
 MedosClient.init({
-  apiKey: "mk_46d6fc5d3d9d0218637785ead9db184546d6fc5d3d9d0218637785ead9db1845",
+  apiKey: "mk_abc887de57ecab1b909968c85da7bd49abc887de57ecab1b909968c85da7bd49",
 });
 
 const Index = () => {
@@ -23,13 +23,11 @@ const Index = () => {
 
       {/* SDK Components wrapped in MedosThemeProvider */}
       <MedosThemeProvider theme={defaultTheme}>
-        <div className="xl:px-72 px-10">
-          <AppointmentCalender
-            onError={(err) => {
-              console.log(err);
-            }}
-          />
-        </div>
+        <AppointmentCalender
+          onError={(err) => {
+            console.log(err);
+          }}
+        />
 
         <div className="xl:px-72 px-10 mt-12">
           <EnquiryForm />
