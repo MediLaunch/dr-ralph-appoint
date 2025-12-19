@@ -11,7 +11,7 @@ import {
 } from "medos-sdk";
 
 MedosClient.init({
-  apiKey: "mk_abc887de57ecab1b909968c85da7bd49abc887de57ecab1b909968c85da7bd49",
+  apiKey: "mk_bf42d16d3fd0c7756dfa3b783061df98bf42d16d3fd0c7756dfa3b783061df98",
 });
 
 const Index = () => {
