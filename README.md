@@ -59,7 +59,7 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
-- **MedOS SDK** (via CDN) - Healthcare widgets for appointments, enquiries, and queue booking
+- **MedOS SDK** (via CDN) - Healthcare widgets for appointments and enquiries
 
 ### MedOS SDK Integration
 
@@ -67,7 +67,6 @@ This application uses the MedOS SDK widgets loaded from CDN for healthcare funct
 
 - **Appointment Booking** - Schedule appointments with healthcare providers
 - **Enquiry Form** - Contact form for patient inquiries
-- **Queue Booking** - Token-based queue management system
 
 The widgets are loaded from `https://widgets.medos.one/v1/` and initialized dynamically in React components.
 
