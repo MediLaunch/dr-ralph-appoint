@@ -1,10 +1,65 @@
-import {
-  AppointmentCalender,
-  defaultTheme,
-  MedosThemeProvider,
-} from "medos-sdk";
+import { useEffect, useRef } from "react";
+
+// Extend window to include MedOS SDK types
+declare global {
+  interface Window {
+    MedosAppointment?: {
+      init: (options: {
+        containerId: string;
+        apiKey: string;
+        mode?: "modal" | "inline";
+        onError?: (error: Error) => void;
+        onSuccess?: () => void;
+      }) => void;
+    };
+  }
+}
 
 const Appointments = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    // Initialize the appointment calendar widget
+    const initWidget = () => {
+      if (
+        window.MedosAppointment &&
+        containerRef.current &&
+        !initialized.current
+      ) {
+        window.MedosAppointment.init({
+          containerId: "appointment-widget-container",
+          apiKey:
+            "mk_bf42d16d3fd0c7756dfa3b783061df98bf42d16d3fd0c7756dfa3b783061df98",
+          mode: "inline",
+          onError: (err) => {
+            console.error("Appointment booking error:", err);
+          },
+          onSuccess: () => {
+            console.log("Appointment booked successfully!");
+          },
+        });
+        initialized.current = true;
+      }
+    };
+
+    // Try to initialize immediately if SDK is already loaded
+    if (window.MedosAppointment) {
+      initWidget();
+    } else {
+      // Wait for SDK to load
+      const checkInterval = setInterval(() => {
+        if (window.MedosAppointment) {
+          initWidget();
+          clearInterval(checkInterval);
+        }
+      }, 100);
+
+      // Cleanup
+      return () => clearInterval(checkInterval);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header Section */}
@@ -19,15 +74,13 @@ const Appointments = () => {
 
       {/* Appointment Calendar Section */}
       <div className="py-12">
-        <MedosThemeProvider theme={defaultTheme}>
-          <div className="xl:px-72 px-10">
-            <AppointmentCalender
-              onError={(err) => {
-                console.log(err);
-              }}
-            />
-          </div>
-        </MedosThemeProvider>
+        <div className="xl:px-72 px-10">
+          <div
+            id="appointment-widget-container"
+            ref={containerRef}
+            className="min-h-[550px]"
+          />
+        </div>
       </div>
 
       {/* Footer */}
