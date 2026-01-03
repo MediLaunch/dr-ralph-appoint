@@ -3,40 +3,59 @@ import { useEffect, useRef } from "react";
 // Extend window to include MedOS SDK types
 declare global {
   interface Window {
-    MedosAppointment?: {
+    MedosQueueBooking?: {
       init: (options: {
         containerId: string;
-        apiKey: string;
-        mode?: "modal" | "inline";
+        apiKey?: string;
         onError?: (error: Error) => void;
-        onSuccess?: () => void;
+        onSuccess?: (token: {
+          tokenNumber: string;
+          queuePosition: number;
+          estimatedWaitTime: number;
+        }) => void;
+        initialQueueStats?: {
+          currentPatientCount: number;
+          estimatedWaitTime: number;
+          queueOpenTime: string;
+          queueCloseTime: string;
+          isQueueOpen: boolean;
+        };
       }) => void;
     };
   }
 }
 
-const Appointments = () => {
+const QueueBookingPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
-    // Initialize the appointment calendar widget
+    // Initialize the queue booking widget from CDN
     const initWidget = () => {
       if (
-        window.MedosAppointment &&
+        window.MedosQueueBooking &&
         containerRef.current &&
         !initialized.current
       ) {
-        window.MedosAppointment.init({
-          containerId: "appointment-widget-container",
+        window.MedosQueueBooking.init({
+          containerId: "queue-widget-container",
           apiKey:
             "mk_bf42d16d3fd0c7756dfa3b783061df98bf42d16d3fd0c7756dfa3b783061df98",
-          mode: "inline",
           onError: (err) => {
-            console.error("Appointment booking error:", err);
+            console.error("Queue booking error:", err);
           },
-          onSuccess: () => {
-            console.log("Appointment booked successfully!");
+          onSuccess: (token) => {
+            console.log("Booking successful!");
+            console.log("Token Number:", token.tokenNumber);
+            console.log("Queue Position:", token.queuePosition);
+            console.log("Estimated Wait:", token.estimatedWaitTime, "minutes");
+          },
+          initialQueueStats: {
+            currentPatientCount: 12,
+            estimatedWaitTime: 28,
+            queueOpenTime: "9:00 AM",
+            queueCloseTime: "6:00 PM",
+            isQueueOpen: true,
           },
         });
         initialized.current = true;
@@ -44,12 +63,12 @@ const Appointments = () => {
     };
 
     // Try to initialize immediately if SDK is already loaded
-    if (window.MedosAppointment) {
+    if (window.MedosQueueBooking) {
       initWidget();
     } else {
       // Wait for SDK to load
       const checkInterval = setInterval(() => {
-        if (window.MedosAppointment) {
+        if (window.MedosQueueBooking) {
           initWidget();
           clearInterval(checkInterval);
         }
@@ -65,18 +84,18 @@ const Appointments = () => {
       {/* Header Section */}
       <div className="bg-primary text-primary-foreground py-12">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-2">Book an Appointment</h1>
+          <h1 className="text-4xl font-bold mb-2">Join the Queue</h1>
           <p className="text-lg opacity-90">
-            Schedule your visit with our healthcare professionals
+            Get your token and wait time estimate for walk-in appointments
           </p>
         </div>
       </div>
 
-      {/* Appointment Calendar Section */}
+      {/* Queue Booking Section */}
       <div className="py-12">
         <div className="xl:px-72 px-10">
           <div
-            id="appointment-widget-container"
+            id="queue-widget-container"
             ref={containerRef}
             className="min-h-[550px]"
           />
@@ -98,4 +117,4 @@ const Appointments = () => {
   );
 };
 
-export default Appointments;
+export default QueueBookingPage;

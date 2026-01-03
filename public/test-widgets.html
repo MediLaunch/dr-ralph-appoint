@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedOS SDK Test</title>
+    <!-- Using Production CDN -->
+    <script src="https://widgets.medos.one/v1/appointments.js"></script>
+    <script src="https://widgets.medos.one/v1/enquiries.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 20px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .widget-container {
+        min-height: 400px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏥 MedOS SDK Test Page</h1>
+    <p>This page tests the MedOS SDK widgets loaded from local build files.</p>
+
+    <div class="test-section">
+      <h2>📊 SDK Loading Status</h2>
+      <div id="sdk-status"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>📅 Appointment Widget Test</h2>
+      <div id="appointment-widget" class="widget-container"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>📝 Enquiry Form Widget Test</h2>
+      <div id="enquiry-widget" class="widget-container"></div>
+    </div>
+
+    <script>
+      console.log("=== MedOS SDK Test ===");
+
+      // Check if SDK is loaded
+      function checkSDK() {
+        const statusDiv = document.getElementById("sdk-status");
+        let html = "<h3>Available Window Objects:</h3><ul>";
+
+        const sdkObjects = ["MedosAppointment", "MedosEnquiry"];
+
+        let loaded = 0;
+        sdkObjects.forEach((obj) => {
+          const exists = typeof window[obj] !== "undefined";
+          if (exists) loaded++;
+          html += `<li><strong>${obj}</strong>: ${
+            exists ? "✅ Loaded" : "❌ Not found"
+          }</li>`;
+          console.log(
+            `${obj}:`,
+            exists ? "Available" : "Not available",
+            window[obj]
+          );
+        });
+
+        html += "</ul>";
+
+        if (loaded > 0) {
+          statusDiv.innerHTML =
+            `<div class="status success">✅ ${loaded} SDK object(s) loaded successfully!</div>` +
+            html;
+
+          // Try to initialize widgets
+          setTimeout(initWidgets, 500);
+        } else {
+          statusDiv.innerHTML = `<div class="status error">❌ SDK not loaded. Check console for errors.</div>`;
+        }
+      }
+
+      function initWidgets() {
+        console.log("Attempting to initialize widgets...");
+
+        const apiKey =
+          "mk_bf42d16d3fd0c7756dfa3b783061df98bf42d16d3fd0c7756dfa3b783061df98";
+
+        // Initialize Appointment Widget
+        if (window.MedosAppointment) {
+          try {
+            window.MedosAppointment.init({
+              containerId: "appointment-widget",
+              apiKey: apiKey,
+              mode: "inline",
+              onError: (err) => {
+                console.error("Appointment widget error:", err);
+              },
+              onSuccess: () => {
+                console.log("✅ Appointment widget success!");
+              },
+            });
+            console.log("✅ Appointment widget initialized successfully");
+          } catch (error) {
+            console.error(
+              "❌ Appointment widget initialization failed:",
+              error
+            );
+          }
+        }
+
+        // Initialize Enquiry Widget
+        if (window.MedosEnquiry) {
+          try {
+            window.MedosEnquiry.init({
+              containerId: "enquiry-widget",
+              apiKey: apiKey,
+              mode: "inline",
+              onError: (err) => {
+                console.error("Enquiry widget error:", err);
+              },
+              onSuccess: () => {
+                console.log("✅ Enquiry widget success!");
+              },
+            });
+            console.log("✅ Enquiry widget initialized successfully");
+          } catch (error) {
+            console.error("❌ Enquiry widget initialization failed:", error);
+          }
+        }
+      }
+
+      // Check immediately
+      checkSDK();
+
+      // Check again after a delay in case scripts are still loading
+      setTimeout(checkSDK, 1000);
+    </script>
+  </body>
+</html>

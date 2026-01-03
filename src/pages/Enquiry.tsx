@@ -1,6 +1,61 @@
-import { EnquiryForm, defaultTheme, MedosThemeProvider } from "medos-sdk";
+import { useEffect, useRef } from "react";
+
+// Extend window to include MedOS SDK types
+declare global {
+  interface Window {
+    MedosEnquiry?: {
+      init: (options: {
+        containerId: string;
+        apiKey: string;
+        mode?: "modal" | "inline";
+        onError?: (error: Error) => void;
+        onSuccess?: () => void;
+      }) => void;
+    };
+  }
+}
 
 const Enquiry = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    // Initialize the enquiry form widget
+    const initWidget = () => {
+      if (window.MedosEnquiry && containerRef.current && !initialized.current) {
+        window.MedosEnquiry.init({
+          containerId: "enquiry-widget-container",
+          apiKey:
+            "mk_bf42d16d3fd0c7756dfa3b783061df98bf42d16d3fd0c7756dfa3b783061df98",
+          mode: "inline",
+          onError: (err) => {
+            console.error("Enquiry form error:", err);
+          },
+          onSuccess: () => {
+            console.log("Enquiry submitted successfully!");
+          },
+        });
+        initialized.current = true;
+      }
+    };
+
+    // Try to initialize immediately if SDK is already loaded
+    if (window.MedosEnquiry) {
+      initWidget();
+    } else {
+      // Wait for SDK to load
+      const checkInterval = setInterval(() => {
+        if (window.MedosEnquiry) {
+          initWidget();
+          clearInterval(checkInterval);
+        }
+      }, 100);
+
+      // Cleanup
+      return () => clearInterval(checkInterval);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header Section */}
@@ -15,11 +70,13 @@ const Enquiry = () => {
 
       {/* Enquiry Form Section */}
       <div className="py-12">
-        <MedosThemeProvider theme={defaultTheme}>
-          <div className="xl:px-72 px-10">
-            <EnquiryForm />
-          </div>
-        </MedosThemeProvider>
+        <div className="xl:px-72 px-10">
+          <div
+            id="enquiry-widget-container"
+            ref={containerRef}
+            className="min-h-[550px]"
+          />
+        </div>
       </div>
 
       {/* Footer */}
