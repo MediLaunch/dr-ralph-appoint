@@ -3,7 +3,6 @@ import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
 import AboutSection from "@/components/AboutSection";
 
-// Extend window to include MedOS SDK types
 declare global {
   interface Window {
     MedosAppointment?: {
@@ -109,14 +108,12 @@ const Index = () => {
     };
 
     // Try to initialize immediately if SDK is already loaded
-    // Note: checking for Appointment is usually enough if they are bundled together, 
-    // but checking all ensures safety.
-    if (window.MedosAppointment) {
+    if (window.MedosAppointment || window.MedosPackagePurchase) {
       initWidgets();
     } else {
       // Wait for SDK to load
       const checkInterval = setInterval(() => {
-        if (window.MedosAppointment) {
+        if (window.MedosAppointment || window.MedosPackagePurchase) {
           initWidgets();
           clearInterval(checkInterval);
         }
@@ -152,7 +149,6 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-8">Purchase Packages</h2>
           <div className="xl:px-72 px-4">
-            {/* The ID here must match the containerId in useEffect */}
             <div
               id="index-package-widget"
               ref={packageContainerRef}
