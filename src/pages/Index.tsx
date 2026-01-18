@@ -3,7 +3,6 @@ import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
 import AboutSection from "@/components/AboutSection";
 
-// Extend window to include MedOS SDK types
 declare global {
   interface Window {
     MedosAppointment?: {
@@ -13,6 +12,14 @@ declare global {
         mode?: "modal" | "inline";
         onError?: (error: Error) => void;
         onSuccess?: () => void;
+      }) => void;
+    };
+    // 1. ADD PACKAGE INTERFACE HERE
+    MedosPackagePurchase?: {
+      init: (options: {
+        containerId: string;
+        apiKey: string;
+        onComplete?: () => void;
       }) => void;
     };
     MedosEnquiry?: {
@@ -33,11 +40,15 @@ const API_KEY =
 const Index = () => {
   const appointmentContainerRef = useRef<HTMLDivElement>(null);
   const enquiryContainerRef = useRef<HTMLDivElement>(null);
+  // 2. ADD REF FOR PACKAGES
+  const packageContainerRef = useRef<HTMLDivElement>(null);
+
   const appointmentInitialized = useRef(false);
   const enquiryInitialized = useRef(false);
+  const packageInitialized = useRef(false);
 
   useEffect(() => {
-    // Initialize both widgets
+    // Initialize all widgets
     const initWidgets = () => {
       // Initialize Appointment Calendar
       if (
@@ -57,6 +68,22 @@ const Index = () => {
           },
         });
         appointmentInitialized.current = true;
+      }
+
+      // 3. INITIALIZE PACKAGE WIDGET
+      if (
+        window.MedosPackagePurchase &&
+        packageContainerRef.current &&
+        !packageInitialized.current
+      ) {
+        window.MedosPackagePurchase.init({
+          containerId: "index-package-widget",
+          apiKey: API_KEY,
+          onComplete: () => {
+            console.log("Package purchase flow completed!");
+          },
+        });
+        packageInitialized.current = true;
       }
 
       // Initialize Enquiry Form
@@ -81,12 +108,12 @@ const Index = () => {
     };
 
     // Try to initialize immediately if SDK is already loaded
-    if (window.MedosAppointment && window.MedosEnquiry) {
+    if (window.MedosAppointment || window.MedosPackagePurchase) {
       initWidgets();
     } else {
       // Wait for SDK to load
       const checkInterval = setInterval(() => {
-        if (window.MedosAppointment && window.MedosEnquiry) {
+        if (window.MedosAppointment || window.MedosPackagePurchase) {
           initWidgets();
           clearInterval(checkInterval);
         }
@@ -103,21 +130,46 @@ const Index = () => {
       <ServicesSection />
       <AboutSection />
 
-      {/* SDK Components loaded via CDN */}
-      <div className="py-12">
-        <div
-          id="index-appointment-widget"
-          ref={appointmentContainerRef}
-          className="min-h-[550px]"
-        />
+      {/* Appointment Widget */}
+      <div className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8">Book Appointment</h2>
+          <div className="xl:px-72 px-4">
+            <div
+              id="index-appointment-widget"
+              ref={appointmentContainerRef}
+              className="min-h-[550px]"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="xl:px-72 px-10 mt-12">
-        <div
-          id="index-enquiry-widget"
-          ref={enquiryContainerRef}
-          className="min-h-[400px]"
-        />
+      {/* 4. PACKAGE WIDGET SECTION */}
+      <div className="py-12 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8">Purchase Packages</h2>
+          <div className="xl:px-72 px-4">
+            <div
+              id="index-package-widget"
+              ref={packageContainerRef}
+              className="min-h-[550px] bg-white rounded-xl shadow-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Enquiry Widget */}
+      <div className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8">Have Questions?</h2>
+          <div className="xl:px-72 px-10">
+            <div
+              id="index-enquiry-widget"
+              ref={enquiryContainerRef}
+              className="min-h-[400px]"
+            />
+          </div>
+        </div>
       </div>
 
       <footer className="bg-primary text-primary-foreground py-8 mt-12">
