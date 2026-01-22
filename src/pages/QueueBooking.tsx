@@ -40,7 +40,7 @@ const QueueBookingPage = () => {
         window.MedosQueueBooking.init({
           containerId: "queue-widget-container",
           apiKey:
-            "mk_bf42d16d3fd0c7756dfa3b783061df98bf42d16d3fd0c7756dfa3b783061df98",
+            "mk_e088643d3f5c0b2b2ae339cb34240631e088643d3f5c0b2b2ae339cb34240631",
           onError: (err) => {
             console.error("Queue booking error:", err);
           },

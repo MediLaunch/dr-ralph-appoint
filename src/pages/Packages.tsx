@@ -27,11 +27,11 @@ const Packages = () => {
             ) {
                 window.MedosPackagePurchase.init({
                     containerId: "package-widget-container",
-                    apiKey: "mk_bf42d16d3fd0c7756dfa3b783061df98bf42d16d3fd0c7756dfa3b783061df98", // Use your actual key
+                    apiKey: "mk_e088643d3f5c0b2b2ae339cb34240631e088643d3f5c0b2b2ae339cb34240631", // Use your actual key
                     onComplete: () => {
                         console.log("Package purchased successfully!");
                         // Optional: Navigate to appointments page after success
-                        // window.location.href = "/appointments"; 
+                        // window.location.href = "/appointments";
                     },
                 });
                 initialized.current = true;
