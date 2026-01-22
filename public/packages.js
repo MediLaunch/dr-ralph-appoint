@@ -22745,7 +22745,7 @@
     mergeConfig,
   } = axios;
 
-  const API_BASE_URL = "https://api.medos.one/v1";
+  const API_BASE_URL = "https://api-dev.medapi.in/v1";
 
   let sessionToken = null;
   const AuthService = {
