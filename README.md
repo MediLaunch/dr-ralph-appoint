@@ -68,7 +68,7 @@ This application uses the MedOS SDK widgets loaded from CDN for healthcare funct
 - **Appointment Booking** - Schedule appointments with healthcare providers
 - **Enquiry Form** - Contact form for patient inquiries
 
-The widgets are loaded from `https://widgets.medos.one/v1/` and initialized dynamically in React components.
+The widgets are loaded from `https://dev-widgets.medos.one/v1/` and initialized dynamically in React components.
 
 For detailed integration documentation, see [CDN_INTEGRATION.md](./CDN_INTEGRATION.md).
 
