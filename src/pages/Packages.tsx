@@ -27,7 +27,7 @@ const Packages = () => {
             ) {
                 window.MedosPackagePurchase.init({
                     containerId: "package-widget-container",
-                    apiKey: "mk_e088643d3f5c0b2b2ae339cb34240631e088643d3f5c0b2b2ae339cb34240631", // Use your actual key
+                    apiKey: "mk_8babbe01aecf4047e27541ebd0fbbccd8babbe01aecf4047e27541ebd0fbbccd", // Use your actual key
                     onComplete: () => {
                         console.log("Package purchased successfully!");
                         // Optional: Navigate to appointments page after success
