@@ -74,14 +74,11 @@ const Appointments = () => {
 
       {/* Appointment Calendar Section */}
       <div className="py-12">
-        <div className="xl:px-72 px-10">
-          <div
-            id="appointment-widget-container"
-            ref={containerRef}
-            className="min-h-[550px]"
-          />
+        <div className="px-4">
+          <div id="appointment-widget-container" ref={containerRef} className="min-h-[800px] max-w-[1140px] mx-auto" />
         </div>
       </div>
+
 
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-8 mt-12">
