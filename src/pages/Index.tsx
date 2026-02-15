@@ -134,7 +134,7 @@ const Index = () => {
       <div className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-8">Book Appointment</h2>
-          <div className="xl:px-72 px-4">
+          <div className="px-4">
             <div
               id="index-appointment-widget"
               ref={appointmentContainerRef}
