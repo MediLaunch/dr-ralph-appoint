@@ -35,7 +35,7 @@ declare global {
 }
 
 const API_KEY =
-  "mk_8babbe01aecf4047e27541ebd0fbbccd8babbe01aecf4047e27541ebd0fbbccd";
+  "mk_6b2285a39610e8bf67e746f41c849ccb6b2285a39610e8bf67e746f41c849ccb";
 
 const Index = () => {
   const appointmentContainerRef = useRef<HTMLDivElement>(null);
